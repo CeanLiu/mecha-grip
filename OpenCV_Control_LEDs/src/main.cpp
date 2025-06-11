@@ -1,19 +1,64 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <ESP32Servo.h>
 
-const char *ssid = "ALANSLAPTOP 5781";
-const char *password = "1Jo6983$";
+const char *ssid = "LXJ 1558";
+const char *password = "big L on you";
+
+Servo myServo;
 AsyncWebServer server(80);
-// Define GPIO pins for LEDs
+
 const int thumbLedPin = 27;
 const int indexLedPin = 26;
 const int middleLedPin = 25;
 const int ringLedPin = 33;
 const int pinkyLedPin = 32;
-void setup()
-{
+const int servoPin = 13;
+
+// Count how many "fingers" (LEDs) are ON
+int countFingersOn() {
+  int count = 0;
+  if (digitalRead(thumbLedPin) == HIGH) count++;
+  if (digitalRead(indexLedPin) == HIGH) count++;
+  if (digitalRead(middleLedPin) == HIGH) count++;
+  if (digitalRead(ringLedPin) == HIGH) count++;
+  if (digitalRead(pinkyLedPin) == HIGH) count++;
+  return count;
+}
+
+// Set servo angle based on number of fingers
+void setServoByFingerCount() {
+  int fingers = countFingersOn();
+  int angle = fingers * 8;
+  myServo.write(angle);
+  Serial.print("Fingers detected: ");
+  Serial.print(fingers);
+  Serial.print(" -> Servo angle: ");
+  Serial.println(angle);
+}
+
+// Registers on/off handlers for a given LED
+void setupLedHandlers(const char* name, int pin) {
+  String onPath = String("/led/") + name + "/on";
+  String offPath = String("/led/") + name + "/off";
+
+  server.on(onPath.c_str(), HTTP_GET, [pin, name](AsyncWebServerRequest *request) {
+    digitalWrite(pin, HIGH);
+    setServoByFingerCount();
+    request->send(200, "text/plain", String(name) + " LED is ON");
+  });
+
+  server.on(offPath.c_str(), HTTP_GET, [pin, name](AsyncWebServerRequest *request) {
+    digitalWrite(pin, LOW);
+    setServoByFingerCount();
+    request->send(200, "text/plain", String(name) + " LED is OFF");
+  });
+}
+
+void setup() {
   Serial.begin(115200);
+
   pinMode(thumbLedPin, OUTPUT);
   pinMode(indexLedPin, OUTPUT);
   pinMode(middleLedPin, OUTPUT);
@@ -24,70 +69,46 @@ void setup()
   digitalWrite(middleLedPin, LOW);
   digitalWrite(ringLedPin, LOW);
   digitalWrite(pinkyLedPin, LOW);
+
+  myServo.attach(servoPin);
+  myServo.write(0);
+
   Serial.println("Connecting to WiFi...");
   WiFi.begin(ssid, password);
   int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 20)
-  { // Try for 20 seconds
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
     delay(1000);
     Serial.print(".");
     attempts++;
   }
-  if (WiFi.status() == WL_CONNECTED)
-  {
+
+  if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\nConnected to WiFi");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
-    // Define HTTP request handlers for each LED
-    server.on("/led/thumb/on", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(thumbLedPin, HIGH);
-     request->send(200, "text/plain", "Thumb LED is ON"); });
-    server.on("/led/thumb/off", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(thumbLedPin, LOW);
-     request->send(200, "text/plain", "Thumb LED is OFF"); });
-    server.on("/led/index/on", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(indexLedPin, HIGH);
-     request->send(200, "text/plain", "Index finger LED is ON"); });
-    server.on("/led/index/off", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(indexLedPin, LOW);
-     request->send(200, "text/plain", "Index finger LED is OFF"); });
-    server.on("/led/middle/on", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(middleLedPin, HIGH);
-     request->send(200, "text/plain", "Middle finger LED is ON"); });
-    server.on("/led/middle/off", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(middleLedPin, LOW);
-     request->send(200, "text/plain", "Middle finger LED is OFF"); });
-    server.on("/led/ring/on", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(ringLedPin, HIGH);
-     request->send(200, "text/plain", "Ring finger LED is ON"); });
-    server.on("/led/ring/off", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(ringLedPin, LOW);
-     request->send(200, "text/plain", "Ring finger LED is OFF"); });
-    server.on("/led/pinky/on", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(pinkyLedPin, HIGH);
-     request->send(200, "text/plain", "Pinky finger LED is ON"); });
-    server.on("/led/pinky/off", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(pinkyLedPin, LOW);
-     request->send(200, "text/plain", "Pinky finger LED is OFF"); });
+
+    // Register endpoints using function
+    // setupLedHandlers("thumb", thumbLedPin);
+    // setupLedHandlers("index", indexLedPin);
+    // setupLedHandlers("middle", middleLedPin);
+    // setupLedHandlers("ring", ringLedPin);
+    // setupLedHandlers("pinky", pinkyLedPin);
+
     server.begin();
     Serial.println("Server started");
-  }
-  else
-  {
+  } else {
     Serial.println("\nFailed to connect to WiFi");
   }
 }
-void loop()
-{
-  // Additional code can be added here if needed, but typically not necessary for basic HTTP server operations.
+
+void loop() {
+  if (Serial.available()) {
+    String input = Serial.readStringUntil('\n');  // Read the whole line
+    int angle = input.toInt();                    // Convert to integer
+    angle = constrain(angle, 0, 180);             // Clamp between 0–180°
+    myServo.write(angle);                         // Move the servo
+    Serial.print("Servo moved to: ");
+    Serial.println(angle);
+  }
 }
+

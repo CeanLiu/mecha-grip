@@ -3,12 +3,13 @@ import mediapipe as mp
 import requests
 
 # ESP32 Base URL
-ESP32_IP = "http://192.168.137.206/"
+ESP32_IP = "http://192.168.137.132/"
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands()
 mp_drawing = mp.solutions.drawing_utils
+
 
 # Function to send hand gesture commands to ESP32
 def control_led(endpoint):
@@ -18,6 +19,7 @@ def control_led(endpoint):
         print(f"Sent command: {endpoint}, ESP32 Response: {response.text}")
     except Exception as e:
         print(f"Failed to send command: {endpoint}, Error: {e}")
+
 
 # Function to fetch commands from ESP32
 def fetch_esp32_command():
@@ -29,14 +31,30 @@ def fetch_esp32_command():
         print(f"Error fetching command from ESP32: {e}")
         return None
 
+
 # Function to detect the state of each finger
 def count_fingers(hand_landmarks):
     # Detect finger states (up or down)
-    thumb_up = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x < hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_IP].x
-    index_up = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y < hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y
-    middle_up = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].y < hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y
-    ring_up = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP].y < hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y
-    pinky_up = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP].y < hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_PIP].y
+    thumb_up = (
+        hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x
+        < hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_IP].x
+    )
+    index_up = (
+        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y
+        < hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y
+    )
+    middle_up = (
+        hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].y
+        < hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y
+    )
+    ring_up = (
+        hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP].y
+        < hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y
+    )
+    pinky_up = (
+        hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP].y
+        < hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_PIP].y
+    )
 
     # Combine finger statuses into a list
     finger_status = [thumb_up, index_up, middle_up, ring_up, pinky_up]
@@ -54,6 +72,7 @@ def count_fingers(hand_landmarks):
         control_led("all/down")  # Example action when all fingers are down
 
     return finger_status
+
 
 # Initialize VideoCapture
 cap = cv2.VideoCapture(0)
@@ -77,9 +96,17 @@ while cap.isOpened():
     # Fetch and display command from ESP32
     esp32_command = fetch_esp32_command()
     if esp32_command:
-        cv2.putText(frame, f"ESP32 Command: {esp32_command}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        cv2.putText(
+            frame,
+            f"ESP32 Command: {esp32_command}",
+            (10, 50),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (0, 255, 0),
+            2,
+        )
 
-    cv2.imshow('Hand Gesture Recognition', frame)
+    cv2.imshow("Hand Gesture Recognition", frame)
 
     if cv2.waitKey(5) & 0xFF == 27:  # Exit on pressing 'Esc'
         break
