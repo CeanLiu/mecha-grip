@@ -1,93 +1,81 @@
-#include <WiFi.h>
-#include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+#include <ESP32Servo.h>
 
-const char *ssid = "ALANSLAPTOP 5781";
-const char *password = "1Jo6983$";
-AsyncWebServer server(80);
-// Define GPIO pins for LEDs
-const int thumbLedPin = 27;
-const int indexLedPin = 26;
-const int middleLedPin = 25;
-const int ringLedPin = 33;
-const int pinkyLedPin = 32;
-void setup()
-{
-  Serial.begin(115200);
-  pinMode(thumbLedPin, OUTPUT);
-  pinMode(indexLedPin, OUTPUT);
-  pinMode(middleLedPin, OUTPUT);
-  pinMode(ringLedPin, OUTPUT);
-  pinMode(pinkyLedPin, OUTPUT);
-  digitalWrite(thumbLedPin, LOW);
-  digitalWrite(indexLedPin, LOW);
-  digitalWrite(middleLedPin, LOW);
-  digitalWrite(ringLedPin, LOW);
-  digitalWrite(pinkyLedPin, LOW);
-  Serial.println("Connecting to WiFi...");
-  WiFi.begin(ssid, password);
-  int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 20)
-  { // Try for 20 seconds
-    delay(1000);
-    Serial.print(".");
-    attempts++;
+// Create Servo objects
+Servo gripServo;      // D27
+Servo waistServo;     // D28
+Servo elbowServo;     // D26
+Servo waistRotServo;  // D25
+Servo shoulderServo1; // D33
+Servo shoulderServo2; // D32
+
+// Angle ranges
+const int gripMin = 0, gripMax = 85;
+const int waistMin = 30, waistMax = 150;
+const int elbowMin = 0, elbowMax = 90;
+const int waistRotMin = 0, waistRotMax = 180;
+const int shoulderMin = 40, shoulderMax = 130;
+
+void testServo(Servo &servo, const char* name, int minAngle, int maxAngle) {
+  Serial.print("Testing ");
+  Serial.println(name);
+
+  for (int angle = minAngle; angle <= maxAngle; angle += 10) {
+    servo.write(angle);
+    delay(30);
   }
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    Serial.println("\nConnected to WiFi");
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
-    // Define HTTP request handlers for each LED
-    server.on("/led/thumb/on", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(thumbLedPin, HIGH);
-     request->send(200, "text/plain", "Thumb LED is ON"); });
-    server.on("/led/thumb/off", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(thumbLedPin, LOW);
-     request->send(200, "text/plain", "Thumb LED is OFF"); });
-    server.on("/led/index/on", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(indexLedPin, HIGH);
-     request->send(200, "text/plain", "Index finger LED is ON"); });
-    server.on("/led/index/off", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(indexLedPin, LOW);
-     request->send(200, "text/plain", "Index finger LED is OFF"); });
-    server.on("/led/middle/on", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(middleLedPin, HIGH);
-     request->send(200, "text/plain", "Middle finger LED is ON"); });
-    server.on("/led/middle/off", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(middleLedPin, LOW);
-     request->send(200, "text/plain", "Middle finger LED is OFF"); });
-    server.on("/led/ring/on", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(ringLedPin, HIGH);
-     request->send(200, "text/plain", "Ring finger LED is ON"); });
-    server.on("/led/ring/off", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(ringLedPin, LOW);
-     request->send(200, "text/plain", "Ring finger LED is OFF"); });
-    server.on("/led/pinky/on", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(pinkyLedPin, HIGH);
-     request->send(200, "text/plain", "Pinky finger LED is ON"); });
-    server.on("/led/pinky/off", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-     digitalWrite(pinkyLedPin, LOW);
-     request->send(200, "text/plain", "Pinky finger LED is OFF"); });
-    server.begin();
-    Serial.println("Server started");
+  delay(200);
+  for (int angle = maxAngle; angle >= minAngle; angle -= 10) {
+    servo.write(angle);
+    delay(30);
   }
-  else
-  {
-    Serial.println("\nFailed to connect to WiFi");
-  }
+  delay(300);
 }
-void loop()
-{
-  // Additional code can be added here if needed, but typically not necessary for basic HTTP server operations.
+
+void testShouldersTogether(int minAngle, int maxAngle) {
+  Serial.println("Testing Shoulders Together");
+  for (int angle = minAngle; angle <= maxAngle; angle += 10) {
+    shoulderServo1.write(angle);
+    shoulderServo2.write(angle);
+    delay(30);
+  }
+  delay(200);
+  for (int angle = maxAngle; angle >= minAngle; angle -= 10) {
+    shoulderServo1.write(angle);
+    shoulderServo2.write(angle);
+    delay(30);
+  }
+  delay(300);
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  gripServo.attach(27);
+  gripServo.write(0);
+  waistServo.attach(28);
+  elbowServo.attach(26);
+  waistRotServo.attach(25);
+  shoulderServo1.attach(33);
+  shoulderServo2.attach(32);
+
+  Serial.println("Starting servo test...");
+}
+
+void loop() {
+  // testServo(gripServo, "Grip", gripMin, gripMax);
+  // testServo(waistServo, "Waist", waistMin, waistMax);
+  // testServo(elbowServo, "Elbow", elbowMin, elbowMax);
+  // testServo(waistRotServo, "Waist Rotate", waistRotMin, waistRotMax);
+  // testShouldersTogether(shoulderMin, shoulderMax);
+  if (Serial.available()) {
+    String input = Serial.readStringUntil('\n');  // Read the whole line
+    int angle = input.toInt();                    // Convert to integer
+    angle = constrain(angle, 0, 180);             // Clamp between 0–180°
+    gripServo.write(angle);                         // Move the servo
+    Serial.print("Servo moved to: ");
+    Serial.println(angle);
+  }
+
+  delay(1000);
 }
