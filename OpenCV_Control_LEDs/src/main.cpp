@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -112,3 +113,57 @@ void loop() {
   }
 }
 
+=======
+#include <Wire.h>
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include <ESP32Servo.h>  // Use <Servo.h> if not on ESP32
+
+Adafruit_MPU6050 mpu;
+Servo myServo;
+
+const int servoPin = 23;  // Set to your servo control pin
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin();
+
+  // Initialize MPU6050
+  if (!mpu.begin()) {
+    Serial.println("MPU6050 not found!");
+    while (1) delay(10);
+  }
+
+  // Configure MPU6050
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
+
+  // Attach servo
+  myServo.attach(servoPin);
+
+  Serial.println("MPU6050 initialized. Starting...");
+}
+
+void loop() {
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+ 
+  // Compute pitch from accelerometer
+  float pitch = atan2(a.acceleration.y, a.acceleration.z) * 180.0 / PI;
+
+  // Map pitch to servo angle range (optional: constrain further)
+  float angle = constrain(pitch, 0, 180);
+
+  // Move servo
+  myServo.write(angle);
+
+  // Debug print
+  Serial.print("Pitch: ");
+  Serial.print(pitch);
+  Serial.print("°, Servo Angle: ");
+  Serial.println(angle);
+
+  delay(100);
+}
+>>>>>>> Stashed changes
