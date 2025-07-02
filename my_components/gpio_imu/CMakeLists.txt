@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "quaternion.c" "complementary_filter.c" "my_imu.c"
-    INCLUDE_DIRS "."           # Your own headers
+    SRCS "src/complementary_filter.c" "src/my_imu.c" "src/quaternion.c"
+    INCLUDE_DIRS "include"
     REQUIRES driver
 )

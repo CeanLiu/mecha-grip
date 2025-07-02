@@ -37,24 +37,19 @@ void imu_task(void *pvParameters) {
     while (1) {
         ESP_ERROR_CHECK(my_imu_update(UPDATE_PERIOD_S));
         float pitch_angle = my_imu_get_filtered_pitch();
+        float yaw_angle = my_imu_get_filtered_yaw();
+        float roll_angle = my_imu_get_filtered_roll();
+        printf("pitch angle: %.2f, yaw angle: %.2f, roll_angle: %.2f\n", pitch_angle, yaw_angle, roll_angle);
 
-        if (pitch_angle < -90.0f) pitch_angle = -90.0f;
-        if (pitch_angle > 90.0f) pitch_angle = 90.0f;
-
-        // Map [-90, 90] to [0, 180]
-        int servo_angle = (int)(pitch_angle + 90.0f);
-
-        // Safety clamps
-        if (servo_angle < 0) servo_angle = 0;
-        if (servo_angle > 180) servo_angle = 180;
-        
-
-        printf("euler angle: %.2f, servo angle: %d\n", pitch_angle, servo_angle);
-        set_servo_angle(SERVO_0, servo_angle);
-        set_servo_angle(SERVO_1, 180.0f - servo_angle);
-        
+        int servo_angle = clampAngle(pitch_angle);
+ 
         vTaskDelay(pdMS_TO_TICKS(1000 / UPDATE_RATE_HZ));  // 20ms for 50Hz
     }
+}
+
+void wifi_client_task(void *pvParameters){
+    printf("wifi client task started");
+    
 }
 
 void app_main(void) {

@@ -190,5 +190,5 @@ void app_main(void)
     nvs_flash_init();
     wifi_sta_init();
 
-    xTaskCreatePinnedToCore(imu_task,"imu",4096*2,NULL,5,NULL,tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(imu_task,"imu",4096*2,NULL L,tskNO_AFFINITY);
 }

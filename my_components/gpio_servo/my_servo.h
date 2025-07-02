@@ -16,4 +16,5 @@ typedef enum {
 
 esp_err_t my_servo_init(void);
 esp_err_t set_servo_angle(servo_id_t id, int angle);
+int clampAngle(float euler_angle);
 #endif // MY_SERVO_H
