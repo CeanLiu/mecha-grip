@@ -7,7 +7,7 @@
 
 esp_err_t my_imu_init(i2c_port_t i2c_num);
 esp_err_t my_imu_update(float update_rate);
-float my_imu_get_filtered_pitch(void); 
-float my_imu_get_filtered_yaw(void); 
-float my_imu_get_filtered_roll(void); 
+float my_imu_get_pitch(int index); 
+float my_imu_get_yaw(int index); 
+float my_imu_get_roll(int index); 
 #endif
