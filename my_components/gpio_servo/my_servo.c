@@ -82,6 +82,6 @@ esp_err_t set_servo_angle(servo_id_t id, int angle) {
     uint32_t duty = angle_to_duty(angle);
     ledc_set_duty(SERVO_MODE, servo_configs[id].channel, duty);
     ledc_update_duty(SERVO_MODE, servo_configs[id].channel);
-
+    printf("setting servo %d to angle %d", id, angle);
     return ESP_OK;
 }
