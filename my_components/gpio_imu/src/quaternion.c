@@ -85,3 +85,28 @@ float quat_to_pitch(Quaternion q) {
     float cosp = 1.0f - 2.0f * (q.y*q.y + q.x*q.x);
     return atan2f(sinp, cosp) * 180.0f / M_PI;
 }
+
+// Add these functions to your quaternion.c file
+
+// Extract independent pitch and roll from quaternion using gravity vector
+// This gives you true tilt angles that don't couple with yaw rotation
+float quat_to_roll_independent(Quaternion q) {
+    // Extract gravity vector components in body frame
+    float gy = 2.0f * (q.w*q.x + q.y*q.z);
+    float gz = 1.0f - 2.0f * (q.x*q.x + q.y*q.y);
+    
+    // Roll is rotation around X-axis (forward/back axis)
+    return atan2f(gy, gz) * 180.0f / M_PI;
+}
+
+
+
+float quat_to_pitch_independent(Quaternion q) {
+    // Extract gravity vector components in body frame
+    float gx = 2.0f * (q.x*q.z - q.w*q.y);
+    float gy = 2.0f * (q.w*q.x + q.y*q.z);
+    float gz = 1.0f - 2.0f * (q.x*q.x + q.y*q.y);
+    
+    // Pitch is rotation around Y-axis (left/right axis)
+    return atan2f(-gx, sqrtf(gy*gy + gz*gz)) * 180.0f / M_PI;
+}

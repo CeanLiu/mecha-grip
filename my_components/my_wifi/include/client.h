@@ -9,6 +9,6 @@
 
 // Function to initialize Wi-Fi with the given SSID and password
 esp_err_t init_wifi_sta();
-esp_err_t post_angles(float p1, float p2, float p3, float p4);
+esp_err_t post_angles(const float *angles, size_t len);
  
 #endif // CLIENT_H

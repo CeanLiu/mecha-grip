@@ -23,4 +23,8 @@ Quaternion quat_slerp(Quaternion q1, Quaternion q2, float t);
 float quat_to_yaw(Quaternion q);
 float quat_to_pitch(Quaternion q);
 float quat_to_roll(Quaternion q);
+
+float quat_to_roll_independent(Quaternion q);
+float quat_to_pitch_independent(Quaternion q);
+
 #endif

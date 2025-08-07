@@ -93,18 +93,43 @@ esp_err_t init_wifi_sta()
 
     return ESP_OK;
 }
-esp_err_t post_angles(float p1, float p2, float p3, float p4) {
-    char body[64];
-    snprintf(body, sizeof body, "p1:%.1f,p2:%.1f,p3:%.1f,p4:%.1f", p1, p2, p3, p4);
+esp_err_t post_angles(const float *angles, size_t len) {
+    // Indices of the angles you want to send
+    //S1 -> SHOULDER ROLL
+    //S2 -> SHOULDER PITCH
+    //S3 -> ELBOW PITCH
+    //S4 -> WRIST PITCH
+    //S5 -> WRIST ROLL
+    // int selected_indices[5] = {8,7,4,1,2};
+
+    char body[128];
+    int offset = 0;
+
+    // for (size_t i = 0; i < 5; ++i) {
+    //     int idx = selected_indices[i];
+    //     if (idx < len) { // Bounds check
+    //         offset += snprintf(body + offset, sizeof(body) - offset,
+    //                            "p%u:%.1f,", i + 1, angles[idx]);
+    //         if (offset >= sizeof(body)) break; // Prevent overflow
+    //     }
+    // }
+    snprintf(body, sizeof body, "p1:%.1f,p2:%.1f,p3:%.1f,p4:%.1f,p5:%.1f", angles[0], angles[1], angles[2], angles[3], angles[4]);
+    // Remove trailing comma
+    if (offset > 0 && body[offset - 1] == ',') {
+        body[offset - 1] = '\0';
+    }
+    printf("POST body: %s\n", body);
+    // Set up HTTP POST request
     esp_http_client_config_t c = {
         .url = SERVER_URL,
         .method = HTTP_METHOD_POST,
         .timeout_ms = 1000
     };
     esp_http_client_handle_t h = esp_http_client_init(&c);
-    esp_http_client_set_header(h, "Content-Type", "text/plain");
+    esp_http_client_set_header(h, "Content-Type", "text/plain"); 
     esp_http_client_set_post_field(h, body, strlen(body));
     esp_err_t err = esp_http_client_perform(h);
     esp_http_client_cleanup(h);
+
     return err;
 }

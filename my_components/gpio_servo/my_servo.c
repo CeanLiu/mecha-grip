@@ -30,15 +30,7 @@ static uint32_t angle_to_duty(int angle) {
     return min_duty + ((max_duty - min_duty) * angle) / 180;
 }
 
-int clampAngle(float euler_angle){
-    
-    if (euler_angle < -90.0f) euler_angle = -90.0f;
-    if (euler_angle > 90.0f) euler_angle = 90.0f;
-
-    // Map [-90, 90] to [0, 180]
-    int servo_angle = (int)(euler_angle + 90.0f);
-
-    // Safety clamps
+int clampAngle(float servo_angle){
     if (servo_angle < 0) servo_angle = 0;
     if (servo_angle > 180) servo_angle = 180;
     return servo_angle;
